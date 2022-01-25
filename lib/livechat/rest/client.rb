@@ -7,11 +7,12 @@ module LiveChat
       API_VERSION = '2'
 
       HTTP_HEADERS = {
-        'Accept' => 'application/json',
-        'Accept-Charset' => 'utf-8',
+        #'Content-Encoding' => 'gzip'
+        #'Accept' => 'application/json',
+        #'Accept-Charset' => 'utf-8',
         'Content-Type' => 'application/json',
-        'User-Agent' => "livechat-ruby/#{LiveChat::VERSION}",
-        'X-API-Version' => API_VERSION
+        #'User-Agent' => "livechat-ruby/#{LiveChat::VERSION}",
+        #'X-API-Version' => API_VERSION
       }
 
       DEFAULTS = {
@@ -50,9 +51,10 @@ module LiveChat
       def initialize(options={})
         yield options if block_given?
         @config = DEFAULTS.merge! options
-        @login = @config[:login].strip
-        @api_key = @config[:api_key].strip
-        raise ArgumentError, "Login and API key are required!" unless @login and @api_key
+        @login = @config[:login].strip if @config[:login]
+        @api_key = @config[:api_key].strip if @config[:api_key]
+        @access_token = @config[:access_token].strip if @config[:access_token]
+        @cookie = @config[:cookie].strip if @config[:cookie]
         set_up_connection
       end
 
@@ -76,8 +78,12 @@ module LiveChat
               path << "?#{url_encode(params)}" if method == :get && !params.empty?
             end
           end
-          request = method_class.new path, HTTP_HEADERS
-          request.basic_auth @login, @api_key
+          headers = HTTP_HEADERS
+          headers['Authorization'] = "Bearer #{@access_token}"
+          headers['cookie'] = @cookie if @cookie
+          request = method_class.new path, headers
+          # disable basic_auth as the latest API works in a different way
+          # request.basic_auth @login, @api_key
           request.body = params.to_json if [:post, :put].include? method
           connect_and_send request
         end

@@ -71,6 +71,119 @@ module LiveChat
         resource_list
       end
 
+      def new_customer(license_id, client_id)
+        raise "Can't get a resource list without a REST Client" unless @client
+        @path = "/customer/token"
+        response = @client.post @path, {
+                      "license_id": license_id,
+                      "grant_type": "agent_token",
+                      "client_id": client_id,
+                      "response_type": "token"
+                    }
+        return response
+        
+      end
+
+      def new_customer_cookie(license_id, client_id, redirect_uri)
+        raise "Can't get a resource list without a REST Client" unless @client
+        @path = "/customer/token"
+        response = @client.post @path, {
+                      "license_id": license_id.to_i,
+                      "grant_type": "cookie",
+                      "client_id": client_id,
+                      "response_type": "token",
+                      "redirect_uri": redirect_uri
+                    }
+        return response
+      end
+
+      def list_customers
+        raise "Can't get a resource list without a REST Client" unless @client
+        @path = "/v3.4/agent/action/list_customers"
+        response = @client.post @path, {}
+        return response
+      end
+
+      def start_chat(organization_id, message_text)
+        raise "Can't get a resource list without a REST Client" unless @client
+        @path = "/v3.4/customer/action/start_chat?organization_id=#{organization_id}"
+        response = @client.post @path, {
+          chat: {
+                  thread: {
+                    events: [
+                      {
+                        type: "message",
+                        text: message_text
+                      }
+                    ]
+                  }
+                }
+        }
+                
+        return response
+      end
+
+      def resume_chat(organization_id, chat_id)
+        raise "Can't get a resource list without a REST Client" unless @client
+        @path = "/v3.4/customer/action/resume_chat?organization_id=#{organization_id}"
+        response = @client.post @path, {
+          chat: {
+                  id: chat_id
+                }
+        }
+                
+        return response
+      end
+
+
+      def send_msg(organization_id, chat_id, message_text)
+        raise "Can't get a resource list without a REST Client" unless @client
+        @path = "/v3.4/customer/action/send_event?organization_id=#{organization_id}"
+        response = @client.post @path, 
+            { 
+                "chat_id": chat_id,
+                "event": {
+                   "type": "message",
+                   "text": message_text,
+                   "recipients": "all"
+                }
+            }
+
+        return response
+      end
+
+      def add_user_to_chat(license_id, chat_id, customer_id)
+        raise "Can't get a resource list without a REST Client" unless @client
+        @path = "/v3.4/agent/action/add_user_to_chat?license_id=#{license_id}"
+        response = @client.post @path, 
+                  {
+                    "chat_id": chat_id,
+                    "user_id": customer_id,
+                    "user_type": "customer",
+                    "visibility": "all",
+                    "require_active_thread": false
+                  }
+
+        return response
+      end
+
+      def create_customer
+        raise "Can't get a resource list without a REST Client" unless @client
+        @path = "/v3.4/agent/action/create_customer"
+        response = @client.post @path, 
+                  {
+                    "name": "Test Customer #{rand(9999999)}",
+                    "email": "c#{rand(9999999)}@example.com",
+                    "session_fields": [{
+                    "custom_key": "custom_value"
+                    }, {
+                      "another_custom_key": "another_custom_value"
+                    }]
+                  }
+
+        return response
+      end
+
       ##
       # Ask LiveChat for the total number of items in the list.
       # Calling this method makes an HTTP GET request to <tt>@path</tt> with a
@@ -109,7 +222,6 @@ module LiveChat
       def each
         list.each { |result| yield result }
       end
-
     end
   end
 end
