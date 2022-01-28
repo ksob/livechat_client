@@ -138,6 +138,12 @@ module LiveChat
         end
         if response.body and !response.body.empty?
           object = MultiJson.load response.body
+          set_cookie = response['set-cookie']
+          if set_cookie.present?
+            cst = set_cookie.split('__lc_cst=').last
+            cst = cst.split("\;").first
+            object["__lc_cst"] = cst
+          end
         end
         if response.kind_of? Net::HTTPClientError
           raise LiveChat::REST::RequestError.new "#{object['message']}: #{response.body}", object['code']
