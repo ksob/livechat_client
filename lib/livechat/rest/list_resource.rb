@@ -152,6 +152,15 @@ module LiveChat
         return response
       end
 
+      def list_customer_chats(organization_id)
+        raise "Can't get a resource list without a REST Client" unless @client
+        @path = "/v3.4/customer/action/list_chats?organization_id=#{organization_id}"
+        response = @client.post @path, {
+        }
+                
+        return response
+      end
+
       def add_user_to_chat(license_id, chat_id, customer_id)
         raise "Can't get a resource list without a REST Client" unless @client
         @path = "/v3.4/agent/action/add_user_to_chat?license_id=#{license_id}"
