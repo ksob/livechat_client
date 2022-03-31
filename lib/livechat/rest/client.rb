@@ -50,7 +50,7 @@ module LiveChat
       #
       def initialize(options={})
         yield options if block_given?
-        @config = DEFAULTS.merge! options
+        @config = DEFAULTS.merge options
         @login = @config[:login].strip if @config[:login]
         @api_key = @config[:api_key].strip if @config[:api_key]
         @access_token = @config[:access_token].strip if @config[:access_token]
@@ -79,11 +79,14 @@ module LiveChat
             end
           end
           headers = HTTP_HEADERS
-          headers['Authorization'] = "Bearer #{@access_token}"
-          headers['cookie'] = @cookie if @cookie
           request = method_class.new path, headers
-          # disable basic_auth as the latest API works in a different way
-          # request.basic_auth @login, @api_key
+          if @access_token.present?
+            headers['Authorization'] = "Bearer #{@access_token}"
+            headers['cookie'] = @cookie if @cookie
+          elsif @login.present?
+            # basic_auth for PAT authentication
+            request.basic_auth @login, @api_key
+          end
           request.body = params.to_json if [:post, :put].include? method
           connect_and_send request
         end
